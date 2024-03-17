@@ -1,0 +1,11 @@
+package components
+
+templ Message(msg string) {
+    <div id="messages" hx-swap-oob="beforeend" class="flex flex-col-reverse gap-2">
+    if msg != "" {
+        <div class="bg-blue-800 p-5 rounded-xl">
+        { msg }
+        </div>
+    }
+    </div>
+}

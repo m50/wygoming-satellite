@@ -1,0 +1,30 @@
+package views
+
+import "clardy.eu/wygoming-satellite/views/layout"
+import "clardy.eu/wygoming-satellite/views/components"
+import "strconv"
+
+templ Index(count int) {
+    @layout.Base() {
+        <div class="bg-slate-800 text-slate-200 text-3xl flex flex-col justify-center h-full min-h-screen w-full gap-3 items-center">
+            <div class="flex">
+                @Count(count)
+                <button
+                    hx-post="/count"
+                    hx-target="#count"
+                    class="bg-blue-500 rounded-xl text-2xl text-slate-200 cursor-pointer w-12 h-12"
+                >+</button>
+            </div>
+            <div hx-ext="ws" ws-connect="/ws" class="flex flex-col gap-5">
+                <form id="form" ws-send>
+                    <input class="text-slate-900" name="message"/>
+                </form>
+                @components.Message("")
+            </div>
+        </div>
+    }
+}
+
+templ Count(count int) {
+    <span id="count">Count: { strconv.Itoa(count) }</span>
+}
