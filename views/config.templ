@@ -1,0 +1,8 @@
+package views
+
+import "github.com/m50/wygoming-satellite/services/config"
+import "fmt"
+
+templ Config(conf *config.Config) {
+    <div>{ fmt.Sprintf("%v", conf) }</div>
+}

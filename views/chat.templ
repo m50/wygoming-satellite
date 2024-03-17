@@ -1,0 +1,17 @@
+package views
+
+import "github.com/m50/wygoming-satellite/views/components"
+
+templ Chat() {
+    <div hx-ext="ws" ws-connect="/ws" class="flex flex-col gap-5 w-full h-full">
+        @components.WSWrapper()
+        <form id="form" ws-send class="flex gap-3 w-full text-xl" hx-on="htmx:wsBeforeSend: this.reset()">
+            <input class="text-slate-300 bg-transparent border-b-2 border-slate-300 w-full break-words" name="message"/>
+            <button type="submit" class="h-8 w-8 fill-current hover:text-indigo-400">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12L3 21l8-9-8-9 18 9z" />
+                </svg>
+            </button>
+        </form>
+    </div>
+}

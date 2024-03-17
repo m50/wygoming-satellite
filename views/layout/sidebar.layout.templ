@@ -1,0 +1,14 @@
+package layout
+
+templ Sidebar() {
+    <div id="sidebar" class="col-span-1 border-r-2 border-slate-500">
+        <ul class="flex flex-col p-4">
+            <li hx-swap-oob="true" hx-get="/chat" hx-target="#content" class="border-b-2 border-slate-500 p-4 cursor-pointer hover:text-indigo-400">
+                Chat
+            </li>
+            <li hx-swap-oob="true" hx-get="/config" hx-target="#content" class="p-4 cursor-pointer hover:text-indigo-400">
+                Config
+            </li>
+        </ul>
+    </div>
+}

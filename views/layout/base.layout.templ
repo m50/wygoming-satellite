@@ -14,7 +14,14 @@ templ Base() {
 			<script src="/assets/scripts.js"></script>
 		</head>
 		<body>
-			{ children... }
+			<div class="bg-slate-800 text-slate-200 text-3xl flex justify-center h-full min-h-screen w-full py-16">
+				<div class="grid grid-cols-4 min-w-[60%] gap-8 top-0 bottom-0 max-h-full">
+					@Sidebar()
+					<main id="content" class="col-span-3 w-full max-h-full">
+					{ children... }
+					</main>
+				</div>
+			</div>
 		</body>
 	</html>
 }
