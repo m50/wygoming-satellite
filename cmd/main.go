@@ -1,35 +1,32 @@
 package main
 
 import (
-	"fmt"
-
-	"clardy.eu/wygoming-satellite/handlers/ws"
-	"clardy.eu/wygoming-satellite/views"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/m50/wygoming-satellite/services/config"
+	"github.com/m50/wygoming-satellite/services/homeassistant"
+	"github.com/m50/wygoming-satellite/services/web"
 )
 
+func newLogger(conf *config.Config) *log.Logger {
+	logger := log.New("wygoming-satellite")
+	logger.SetHeader("${time_rfc3339} ${level} ${short_file}:${line}")
+	conf.SetLogLevel(logger)
+
+	return logger
+}
 
 func main() {
-	count := 0
-	wsHandler := ws.GetWS()
+	conf, err := config.ReadConfig("./config.json")
+	if err != nil {
+		panic(err)
+	}
 
-	e := echo.New()
-	e.Logger.SetLevel(log.DEBUG)
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-	e.Static("/assets", "assets")
-	e.GET("/", func(c echo.Context) error {
-		wsHandler.Feed <- ws.WebSocketMessage{Message: "Welcome!"}
-		return views.RenderView(c, 200, views.Index(count))
-	})
-	e.POST("/count", func(c echo.Context) error {
-		count++
-		wsHandler.Feed <- ws.WebSocketMessage{Message: fmt.Sprintf("New count: %d", count)}
-		return views.RenderView(c, 200, views.Count(count))
-	})
-	e.GET("/ws", wsHandler.Handle)
+	logger := newLogger(conf)
+	webServer := web.NewWebServer(conf, logger)
+	ha := homeassistant.NewHomeAssistantConnection(conf, logger)
+	go ha.Run()
+	go webServer.Run()
 
-	e.Logger.Fatal(e.Start(":8765"))
+	for {
+	} // Keep alive
 }

@@ -1,0 +1,10 @@
+{
+  "LogLevel": "debug",
+  "WebUIPort": 8765,
+  "HomeAssistantAddress": "assistant.home.clardy.eu:443",
+  "HomeAssistant": {
+      "Address": "assistant.home.clardy.eu:443",
+      "AccessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJlNzE5ZTRhMmFiMDE0MWZmODQxMzQ4ODY3NDY3ZjhhMCIsImlhdCI6MTcxMDcwNjEwMSwiZXhwIjoyMDI2MDY2MTAxfQ.FOlyhvmPQ4bpULg4267y_aSkhoIcWJgNM5pRouKhmXg"
+  },
+  "MQTTBroker": "192.168.68.68:1883"
+}

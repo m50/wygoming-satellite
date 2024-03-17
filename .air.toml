@@ -24,7 +24,7 @@ tmp_dir = "tmp"
   pre_cmd = [
     "templ generate",
     "bunx tailwindcss -i ./frontend/input.css -o ./assets/tw.css",
-    "bun build --target=\"browser\" --outfile assets/scripts.js --minify frontend/index.ts"
+    "bun build --sourcemap --target=\"browser\" --outfile assets/scripts.js --minify frontend/index.ts"
   ]
   rerun = false
   rerun_delay = 500
