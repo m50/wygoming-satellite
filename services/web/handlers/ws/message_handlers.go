@@ -19,11 +19,6 @@ func EchoHandler(message WebSocketMessage, ws *websocket.Conn, c echo.Context) e
 	}
 
 	if err := ws.WriteMessage(messageType, disp); err != nil {
-		// Handle page refreshes
-		// if strings.Contains(err.Error(), "connection has been hijacked") || strings.Contains(err.Error(), "websocket: close sent") {
-		// 	c.Logger().Warnf("failed to write %s '%s' due to closed connection, retrying...", message.Type, message.Message)
-		// 	return nil
-		// }
 		return err
 	}
 	c.Logger().Infof("wrote %s '%s'", message.Type, message.Message)
