@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/m50/wygoming-satellite/services/config"
+	"github.com/m50/wygoming-satellite/services/web/handlers"
 	"github.com/m50/wygoming-satellite/services/web/handlers/ws"
 	"github.com/m50/wygoming-satellite/views"
 )
@@ -26,16 +27,22 @@ func NewWebServer(conf *config.Config, logger *log.Logger) WebServer {
 	server.Use(middleware.Recover())
 	server.Static("/assets", "assets")
 
-	wsHandler := ws.GetWS()
 	server.GET("/", func(c echo.Context) error {
 		return views.RenderView(c, 200, views.Index())
 	})
 	server.GET("/chat", func(c echo.Context) error {
+		if c.Request().Header.Get("hx-request") != "true" {
+			return views.RenderView(c, 200, views.Index())
+		}
 		return views.RenderView(c, 200, views.Chat())
 	})
-	server.GET("/config", func(c echo.Context) error {
-		return views.RenderView(c, 200, views.Config(conf))
-	})
+
+	configHandler := handlers.NewConfigHandler(conf)
+	server.GET("/config", configHandler.HandleGet)
+	server.PATCH("/config", configHandler.HandleUpdate)
+
+	wsHandler := ws.GetWS()
+	wsHandler.RegisterHandle(ws.EchoHandler)
 	server.GET("/ws", wsHandler.Handle)
 
 	return WebServer{
@@ -45,5 +52,5 @@ func NewWebServer(conf *config.Config, logger *log.Logger) WebServer {
 }
 
 func (w *WebServer) Run() {
-	w.server.Logger.Fatal(w.server.Start(fmt.Sprintf(":%d", w.conf.WebUIPort)))
+	w.server.Logger.Fatal(w.server.Start(fmt.Sprintf(":%d", w.conf.Values.WebUIPort)))
 }

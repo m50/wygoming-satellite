@@ -15,11 +15,16 @@ type HomeAssistantConfig struct {
 	AccessToken string
 }
 
-type Config struct {
+type ConfigValues struct {
 	WebUIPort uint16
 	HomeAssistant HomeAssistantConfig
 	MQTTBroker string
 	LogLevel string
+}
+
+type Config struct {
+	Values ConfigValues
+	ConfigPath string
 }
 
 func ReadConfig(path string) (*Config, error) {
@@ -28,7 +33,7 @@ func ReadConfig(path string) (*Config, error) {
 		return nil, err
 	}
 
-	var conf Config
+	var conf ConfigValues
 	err = json.Unmarshal(data, &conf)
 	if err != nil {
 		return nil, err
@@ -37,10 +42,13 @@ func ReadConfig(path string) (*Config, error) {
 		return nil, err
 	}
 
-	return &conf, nil
+	return &Config{
+		ConfigPath: path,
+		Values: conf,
+	}, nil
 }
 
-func (c *Config) validate() error {
+func (c *ConfigValues) validate() error {
 	// HomeAssistantURL
 	if len(c.HomeAssistant.Address) < 1 {
 		return errors.New("HomeAssistant.Address must be set")
@@ -72,13 +80,13 @@ func (c *Config) validate() error {
 
 
 func (c *Config) SetLogLevel(l echo.Logger) {
-	if c.LogLevel == "debug" {
+	if c.Values.LogLevel == "debug" {
 		l.SetLevel(log.DEBUG)
-	} else if c.LogLevel == "info" {
+	} else if c.Values.LogLevel == "info" {
 		l.SetLevel(log.INFO)
-	} else if c.LogLevel == "error" {
+	} else if c.Values.LogLevel == "error" {
 		l.SetLevel(log.ERROR)
-	} else if c.LogLevel == "warn" {
+	} else if c.Values.LogLevel == "warn" {
 		l.SetLevel(log.WARN)
 	}
 }

@@ -57,7 +57,7 @@ func (ha *HomeAssistant) Run() {
 		return
 	}
 	wsPath := "/api/websocket"
-	u := url.URL{Scheme: "ws", Host: ha.conf.HomeAssistant.Address, Path: wsPath}
+	u := url.URL{Scheme: "ws", Host: ha.conf.Values.HomeAssistant.Address, Path: wsPath}
 	c, err := tryAndUpgradeConnect(u)
 	if err != nil {
 		ha.logger.Error(err)
@@ -82,7 +82,7 @@ func (ha *HomeAssistant) readMessages() {
 		}
 		ha.logger.Info("<- ", string(msg))
 		if strings.Contains(string(msg), "auth_required") {
-			ha.Request(0, auth(ha.conf.HomeAssistant.AccessToken))
+			ha.Request(0, auth(ha.conf.Values.HomeAssistant.AccessToken))
 			ha.Done(0)
 			continue
 		}

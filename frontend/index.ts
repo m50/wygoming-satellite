@@ -40,4 +40,5 @@ htmx.on('htmx:beforeSwap', (evt: Event) => {
     ws.close()
     ws = null
   }
+  console.log(evt)
 })

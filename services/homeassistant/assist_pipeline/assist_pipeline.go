@@ -2,13 +2,17 @@ package assist_pipeline
 
 import (
 	"encoding/json"
+	"strings"
 
+	"github.com/labstack/gommon/log"
 	"github.com/m50/wygoming-satellite/services/homeassistant"
 )
 
 type PipelineManager struct {
 	ha                *homeassistant.HomeAssistant
+	logger            *log.Logger
 	PreferredPipeline string
+	ConversationId    *string
 }
 
 type Pipeline struct {
@@ -25,10 +29,12 @@ type Pipeline struct {
 	WakeWordID           string `json:"wake_word_id"`
 }
 
-func NewPipelineManager(ha *homeassistant.HomeAssistant) PipelineManager {
+func NewPipelineManager(ha *homeassistant.HomeAssistant, logger *log.Logger) PipelineManager {
 	return PipelineManager{
-		ha: ha,
+		ha:                ha,
+		logger:            logger,
 		PreferredPipeline: "",
+		ConversationId:    nil,
 	}
 }
 
@@ -83,3 +89,32 @@ func (pm *PipelineManager) GetPipeline(id string) (Pipeline, error) {
 	return r.Result, nil
 }
 
+type RunPipelineCommand struct {
+	ConversationID *string `json:"conversation_id"`
+}
+
+func (pm *PipelineManager) RunPipeline(id string, text string) error {
+	reqID := pm.ha.NextRequestId()
+	resp, err := pm.ha.Request(reqID, map[string]interface{}{
+		"id": reqID,
+		"type": "assist_pipeline/pipeline/get",
+		"pipeline_id": id,
+	});
+	if err != nil {
+		return err
+	}
+	defer pm.ha.Done(reqID)
+
+OuterLoop:
+	for {
+		select {
+		case msg := <- resp:
+			pm.logger.Info(msg)
+			if strings.Contains(string(msg), "run-end") {
+				break OuterLoop
+			}
+		}
+	}
+
+	return nil
+}

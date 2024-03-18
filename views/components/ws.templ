@@ -1,5 +1,10 @@
 package components
 
+templ WSEmpty() {
+    <div id="messages" class="h-full flex flex-col gap-2 text-xl">
+    </div>
+}
+
 templ WSWrapper() {
     <div id="messages" hx-swap-oob="beforeend" class="h-full flex flex-col gap-2 text-xl">
     {children...}
