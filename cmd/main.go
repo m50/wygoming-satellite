@@ -22,8 +22,8 @@ func main() {
 	}
 
 	logger := newLogger(conf)
-	webServer := web.NewWebServer(conf, logger)
 	ha := homeassistant.NewHomeAssistantConnection(conf, logger)
+	webServer := web.NewWebServer(conf, logger)
 	go ha.Run()
 	go webServer.Run()
 

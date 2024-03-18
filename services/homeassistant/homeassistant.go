@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/gommon/log"
@@ -17,11 +18,12 @@ type HomeAssistant struct {
 	logger        *log.Logger
 	conn          *websocket.Conn
 	requestEvents map[int]chan []byte
+	pm            *PipelineManager
 }
 
 var singleton *HomeAssistant
 
-func GetHomeAssistantConnect() *HomeAssistant {
+func GetHomeAssistantConnection() *HomeAssistant {
 	return singleton
 }
 
@@ -67,6 +69,9 @@ func (ha *HomeAssistant) Run() {
 	defer c.Close()
 	defer func() { ha.conn = nil }()
 
+	// TODO: Re-enable later, don't need it atm
+	// t := time.NewTicker(5 * time.Second)
+	// go ping(ha, t)
 	ha.readMessages()
 }
 
@@ -80,7 +85,7 @@ func (ha *HomeAssistant) readMessages() {
 			ha.logger.Error(err)
 			continue
 		}
-		ha.logger.Info("<- ", string(msg))
+		ha.logger.Debug("<- ", string(msg))
 		if strings.Contains(string(msg), "auth_required") {
 			ha.Request(0, auth(ha.conf.Values.HomeAssistant.AccessToken))
 			ha.Done(0)
@@ -115,7 +120,8 @@ func (ha *HomeAssistant) Request(reqID int, evt interface{}) (chan []byte, error
 		return nil, fmt.Errorf("Unable to write message, HomeAssistant connection not open")
 	}
 
-	ha.logger.Info("-> ", evt)
+	j, _ := json.Marshal(evt)
+	ha.logger.Debug("-> ", string(j))
 
 	if err := ha.conn.WriteJSON(evt); err != nil {
 		return nil, err
@@ -138,4 +144,34 @@ func (ha *HomeAssistant) AwaitResponse(reqID int) ([]byte, error) {
 func (ha *HomeAssistant) NextRequestId() int {
 	ha.nextRequestId++
 	return ha.nextRequestId
+}
+
+func (ha *HomeAssistant) GetPipelineManager() *PipelineManager {
+	if ha.pm == nil {
+		ha.pm = newPipelineManager(ha, ha.logger)
+	}
+
+	return ha.pm
+}
+
+func ping(ha *HomeAssistant, t *time.Ticker) {
+	for {
+		select {
+		case <-t.C:
+			reqID := ha.NextRequestId()
+			ha.Request(reqID, map[string]interface{}{
+				"id": reqID,
+				"type": "ping",
+			})
+			resp, err := ha.AwaitResponse(reqID)
+			if err != nil {
+				ha.logger.Error(err)
+				break
+			}
+			if !strings.Contains(string(resp), "pong") {
+				ha.logger.Error("pong not received back...")
+				break
+			}
+		}
+	}
 }

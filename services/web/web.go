@@ -43,6 +43,7 @@ func NewWebServer(conf *config.Config, logger *log.Logger) WebServer {
 
 	wsHandler := ws.GetWS()
 	wsHandler.RegisterHandle(ws.EchoHandler)
+	wsHandler.RegisterHandle(ws.PipelineHandler)
 	server.GET("/ws", wsHandler.Handle)
 
 	return WebServer{

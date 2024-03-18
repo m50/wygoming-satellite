@@ -3,6 +3,7 @@ package ws
 import (
 	"crypto/sha256"
 	"fmt"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
@@ -75,21 +76,17 @@ func (w *WS) Handle(c echo.Context) error {
 
 	go w.processMessages(feed, ws, c)
 	for {
-		// keep alive
+		if ok := w.readMessage(ws, c); !ok {
+			return nil
+		}
 	}
-	// go w.processMessages(ws, c)
-	// for {
-	// 	if ok := w.readMessage(ws, c); !ok {
-	// 		return nil
-	// 	}
-	// }
 }
 
 func (w *WS) processMessages(feed chan WebSocketMessage, ws *websocket.Conn, c echo.Context) {
 	for {
 		select {
 		case msg := <-feed:
-			if msg.Close {
+			if msg.Type == Close || msg.Type == "" || len(strings.TrimSpace(msg.Message)) < 1 {
 				return
 			}
 			for _, h := range(w.handlers) {
@@ -101,57 +98,28 @@ func (w *WS) processMessages(feed chan WebSocketMessage, ws *websocket.Conn, c e
 	}
 }
 
-// func (w *WS) processMessages(ws *websocket.Conn, c echo.Context) {
-// 	for {
-// 		select {
-// 		case message := <-w.feed:
-// 			c.Logger().Debugf("attempting to write %s '%s'", message.Type, message.Message)
-// 			disp, err := message.Render(c)
-// 			if err != nil {
-// 				c.Logger().Error(err)
-// 				break
-// 			}
-// 			var messageType int
-// 			if message.Type == "binary" {
-// 				messageType = websocket.BinaryMessage
-// 			} else {
-// 				messageType = websocket.TextMessage
-// 			}
+func (w *WS) readMessage(ws *websocket.Conn, c echo.Context) bool {
+	var chatMessage WebSocketMessage
+	if err := ws.ReadJSON(&chatMessage); err != nil {
+		if strings.Contains(err.Error(), "websocket: close 1001") {
+			c.Logger().Warn("connection broken, closing reader...")
+			return false
+		}
+		c.Logger().Error(err)
+		return true
+	}
+	c.Logger().Info(chatMessage)
+	if chatMessage.Type != Close && len(strings.TrimSpace(chatMessage.Message)) < 1 {
+		// Ignore empty messages
+		return true
+	}
+	w.feed <- chatMessage
+	if chatMessage.Type == Close {
+		return false
+	}
 
-// 			if err := ws.WriteMessage(messageType, disp); err != nil {
-// 				// Handle page refreshes
-// 				if strings.Contains(err.Error(), "connection has been hijacked") || strings.Contains(err.Error(), "websocket: close sent") {
-// 					c.Logger().Warnf("failed to write %s '%s' due to closed connection, retrying...", message.Type, message.Message)
-// 					w.feed <-message
-// 					return
-// 				}
-// 				c.Logger().Error(err)
-// 			}
-// 			c.Logger().Infof("wrote %s '%s'", message.Type, message.Message)
-// 			break
-// 		}
-// 	}
-// }
-
-// func (w *WS) readMessage(ws *websocket.Conn, c echo.Context) bool {
-// 	var chatMessage WebSocketMessage
-// 	if err := ws.ReadJSON(&chatMessage); err != nil {
-// 		// Handle page refreshes
-// 		if strings.Contains(err.Error(), "(going away)") || strings.Contains(err.Error(), "close 1005") {
-// 			return false
-// 		}
-// 		c.Logger().Error(err)
-// 		return true
-// 	}
-// 	if !chatMessage.Close && len(strings.TrimSpace(chatMessage.Message)) < 1 {
-// 		// Ignore empty messages
-// 		return true
-// 	}
-// 	chatMessage.Type = "echo"
-// 	w.feed <- chatMessage
-
-// 	return true
-// }
+	return true
+}
 
 func hashStr(in string) string {
 	h := sha256.New()

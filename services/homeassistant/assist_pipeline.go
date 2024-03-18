@@ -1,15 +1,14 @@
-package assist_pipeline
+package homeassistant
 
 import (
 	"encoding/json"
 	"strings"
 
 	"github.com/labstack/gommon/log"
-	"github.com/m50/wygoming-satellite/services/homeassistant"
 )
 
 type PipelineManager struct {
-	ha                *homeassistant.HomeAssistant
+	ha                *HomeAssistant
 	logger            *log.Logger
 	PreferredPipeline string
 	ConversationId    *string
@@ -29,8 +28,8 @@ type Pipeline struct {
 	WakeWordID           string `json:"wake_word_id"`
 }
 
-func NewPipelineManager(ha *homeassistant.HomeAssistant, logger *log.Logger) PipelineManager {
-	return PipelineManager{
+func newPipelineManager(ha *HomeAssistant, logger *log.Logger) *PipelineManager {
+	return &PipelineManager{
 		ha:                ha,
 		logger:            logger,
 		PreferredPipeline: "",
@@ -41,7 +40,7 @@ func NewPipelineManager(ha *homeassistant.HomeAssistant, logger *log.Logger) Pip
 func (pm *PipelineManager) ListPipelines() ([]Pipeline, error) {
 	reqID := pm.ha.NextRequestId()
 	if _, err := pm.ha.Request(reqID, map[string]interface{}{
-		"id": reqID,
+		"id":   reqID,
 		"type": "assist_pipeline/pipeline/list",
 	}); err != nil {
 		return []Pipeline{}, err
@@ -50,10 +49,10 @@ func (pm *PipelineManager) ListPipelines() ([]Pipeline, error) {
 	if err != nil {
 		return []Pipeline{}, err
 	}
-	var r struct{
-		Result struct{
-			Pipelines []Pipeline `json:"pipelines"`
-			PreferredPipeline string `json:"preferred_pipeline"`
+	var r struct {
+		Result struct {
+			Pipelines         []Pipeline `json:"pipelines"`
+			PreferredPipeline string     `json:"preferred_pipeline"`
 		} `json:"result"`
 	}
 	if err := json.Unmarshal([]byte(resp), &r); err != nil {
@@ -67,8 +66,8 @@ func (pm *PipelineManager) ListPipelines() ([]Pipeline, error) {
 func (pm *PipelineManager) GetPipeline(id string) (Pipeline, error) {
 	reqID := pm.ha.NextRequestId()
 	if _, err := pm.ha.Request(reqID, map[string]interface{}{
-		"id": reqID,
-		"type": "assist_pipeline/pipeline/get",
+		"id":          reqID,
+		"type":        "assist_pipeline/pipeline/get",
 		"pipeline_id": id,
 	}); err != nil {
 		return Pipeline{}, err
@@ -79,7 +78,7 @@ func (pm *PipelineManager) GetPipeline(id string) (Pipeline, error) {
 		return Pipeline{}, err
 	}
 
-	var r struct{
+	var r struct {
 		Result Pipeline `json:"result"`
 	}
 	if err := json.Unmarshal([]byte(resp), &r); err != nil {
@@ -89,32 +88,56 @@ func (pm *PipelineManager) GetPipeline(id string) (Pipeline, error) {
 	return r.Result, nil
 }
 
-type RunPipelineCommand struct {
-	ConversationID *string `json:"conversation_id"`
+type RunPipelineInput struct {
+	Text string `json:"text"`
 }
 
-func (pm *PipelineManager) RunPipeline(id string, text string) error {
+type RunPipelineCommand struct {
+	ID             int              `json:"id"`
+	Type           string           `json:"type"`
+	StartStage     string           `json:"start_stage"`
+	EndStage       string           `json:"end_stage"`
+	PipelineID     string           `json:"pipeline"`
+	ConversationID *string          `json:"conversation_id"`
+	Input          RunPipelineInput `json:"input"`
+}
+
+func (pm *PipelineManager) RunTextPipeline(id string, text string) (string, error) {
 	reqID := pm.ha.NextRequestId()
-	resp, err := pm.ha.Request(reqID, map[string]interface{}{
-		"id": reqID,
-		"type": "assist_pipeline/pipeline/get",
-		"pipeline_id": id,
-	});
+	resp, err := pm.ha.Request(reqID, RunPipelineCommand{
+		ID:             reqID,
+		Type:           "assist_pipeline/run",
+		StartStage:     "intent",
+		EndStage:       "intent",
+		ConversationID: pm.ConversationId,
+		PipelineID:     id,
+		Input: RunPipelineInput{
+			Text: text,
+		},
+	})
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer pm.ha.Done(reqID)
 
 OuterLoop:
 	for {
 		select {
-		case msg := <- resp:
-			pm.logger.Info(msg)
+		case msg := <-resp:
 			if strings.Contains(string(msg), "run-end") {
 				break OuterLoop
+			}
+			if strings.Contains(string(msg), "intent-end") {
+				var m Response[IntentEnd]
+				if err := json.Unmarshal(msg, &m); err != nil {
+					return "", err
+				}
+				pm.ConversationId = m.Event.Data.IntentOutput.ConversationID
+
+				return m.Event.Data.IntentOutput.Response.Speech.Plain.Speech, nil
 			}
 		}
 	}
 
-	return nil
+	return "", nil
 }

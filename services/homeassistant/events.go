@@ -1,5 +1,36 @@
 package homeassistant
 
+import "time"
+
+type Event[D any] struct {
+	Type string `json:"type"`
+	Data D `json:"data"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+type Response[D any] struct {
+	ID int `json:"id"`
+	Type string `json:"type"`
+	Event Event[D] `json:"event"`
+}
+
+type IntentEnd struct {
+	IntentOutput struct {
+		Response IntentOutputResponse `json:"response"`
+		ConversationID *string `json:"conversation_id"`
+	} `json:"intent_output"`
+}
+
+type IntentOutputResponse struct {
+	Speech struct {
+		Plain struct {
+			Speech string `json:"speech"`
+		} `json:"plain"`
+	} `json:"speech"`
+	Language string `json:"language"`
+	ResponseTypes string `json:"response_type"`
+}
+
 // Receive:
 // {"id":46,"type":"result","success":true,"result":null}
 // [{"id":45,"type":"event","event":{"type":"run-start","data":{"pipeline":"01hp2qn3txcy889v4ceffyw0nj","language":"en","runner_data":{"stt_binary_handler_id":null,"timeout":300}},"timestamp":"2024-03-17T18:09:50.326565+00:00"}},{"id":45,"type":"event","event":{"type":"intent-start","data":{"engine":"da161b0bfd19f6df805dd895237432d8","language":"en","intent_input":"What is the weather today?","conversation_id":null,"device_id":null},"timestamp":"2024-03-17T18:09:50.326626+00:00"}}]
