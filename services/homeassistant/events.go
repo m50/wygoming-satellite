@@ -4,7 +4,7 @@ import "time"
 
 type Event[D any] struct {
 	Type string `json:"type"`
-	Data D `json:"data"`
+	Data *D `json:"data"`
 	Timestamp time.Time `json:"timestamp"`
 }
 

@@ -122,20 +122,18 @@ func (pm *PipelineManager) RunTextPipeline(id string, text string) (string, erro
 
 OuterLoop:
 	for {
-		select {
-		case msg := <-resp:
-			if strings.Contains(string(msg), "run-end") {
-				break OuterLoop
+		msg := <-resp
+		if strings.Contains(string(msg), "run-end") {
+			break OuterLoop
+		}
+		if strings.Contains(string(msg), "intent-end") {
+			var m Response[IntentEnd]
+			if err := json.Unmarshal(msg, &m); err != nil {
+				return "", err
 			}
-			if strings.Contains(string(msg), "intent-end") {
-				var m Response[IntentEnd]
-				if err := json.Unmarshal(msg, &m); err != nil {
-					return "", err
-				}
-				pm.ConversationId = m.Event.Data.IntentOutput.ConversationID
+			pm.ConversationId = m.Event.Data.IntentOutput.ConversationID
 
-				return m.Event.Data.IntentOutput.Response.Speech.Plain.Speech, nil
-			}
+			return m.Event.Data.IntentOutput.Response.Speech.Plain.Speech, nil
 		}
 	}
 

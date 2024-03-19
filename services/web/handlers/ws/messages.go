@@ -11,10 +11,10 @@ import (
 // WebSocketMessageType can be "echo", "message", "binary"
 type WebSocketMessageType string
 
-var Echo WebSocketMessageType = "echo"
-var Message WebSocketMessageType = "message"
-var Binary WebSocketMessageType = "binary"
-var Close WebSocketMessageType = "close"
+const Echo WebSocketMessageType = "echo"
+const Message WebSocketMessageType = "message"
+const Binary WebSocketMessageType = "binary"
+const Close WebSocketMessageType = "close"
 
 // WebSocketMessage is the shape of messages coming in from the Websocket
 type WebSocketMessage struct {
