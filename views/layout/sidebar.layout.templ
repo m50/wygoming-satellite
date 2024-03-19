@@ -2,7 +2,13 @@ package layout
 
 templ Sidebar() {
     <div id="sidebar" class="col-span-1 border-r-2 border-slate-500 text-3xl">
-        <ul class="flex flex-col p-4">
+        <button id="sidebar-burger" class="hover:text-indigo-400 md:hidden p-4">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="M0 0h24v24H0z" fill="none"/>
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+            </svg>
+        </button>
+        <ul id="sidebar-options" class="hidden md:flex flex-col p-4">
             <li hx-get="/chat" hx-target="#content" hx-replace-url="true" class="border-b-2 border-slate-500 p-4 cursor-pointer hover:text-indigo-400">
                 Chat
             </li>

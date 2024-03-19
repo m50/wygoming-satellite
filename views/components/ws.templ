@@ -13,9 +13,9 @@ templ WSWrapper() {
 
 templ WSMessage(msg string) {
     @WSWrapper() {
-        <div class="grid grid-cols-3">
-            <div class="bg-violet-600 p-5 rounded-xl col-span-2 break-words">
-            { msg }
+        <div class="flex w-full">
+            <div class="bg-violet-600 p-5 rounded-xl max-w-[90%] break-words">
+            <pre class="text-wrap font-sans">{ msg }</pre>
             </div>
         </div>
     }
@@ -23,9 +23,9 @@ templ WSMessage(msg string) {
 
 templ WSEcho(msg string) {
     @WSWrapper() {
-        <div class="grid grid-cols-3">
-            <div class="bg-indigo-600 p-5 rounded-xl col-start-2 col-span-2 break-words">
-            { msg }
+        <div class="flex w-full justify-end">
+            <div class="bg-indigo-600 p-5 rounded-xl max-w-[90%] break-words">
+            <pre class="text-wrap font-sans">{ msg }</pre>
             </div>
         </div>
     }
