@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -28,12 +29,9 @@ func NewWebServer(conf *config.Config, logger *log.Logger) WebServer {
 	server.Static("/assets", "assets")
 
 	server.GET("/", func(c echo.Context) error {
-		return views.RenderView(c, 200, views.Index())
+		return c.Redirect(http.StatusMovedPermanently, "/chat")
 	})
 	server.GET("/chat", func(c echo.Context) error {
-		if c.Request().Header.Get("hx-request") != "true" {
-			return views.RenderView(c, 200, views.Index())
-		}
 		return views.RenderView(c, 200, views.Chat())
 	})
 

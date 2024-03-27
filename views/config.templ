@@ -1,14 +1,7 @@
 package views
 
-import "github.com/m50/wygoming-satellite/views/layout"
 import "github.com/m50/wygoming-satellite/services/config"
 import "strconv"
-
-templ RootConfig(conf config.ConfigValues) {
-    @layout.Base() {
-        @Config(conf)
-    }
-}
 
 templ Config(conf config.ConfigValues) {
     <form hx-patch="/config" class="flex flex-col gap-8 h-full">

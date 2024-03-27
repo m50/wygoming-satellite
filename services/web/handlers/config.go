@@ -21,9 +21,6 @@ func NewConfigHandler(conf *config.Config) ConfigHandler {
 }
 
 func (h *ConfigHandler) HandleGet(c echo.Context) error {
-	if c.Request().Header.Get("hx-request") != "true" {
-		return views.RenderView(c, 200, views.RootConfig(h.conf.Values))
-	}
 	return views.RenderView(c, 200, views.Config(h.conf.Values))
 }
 
