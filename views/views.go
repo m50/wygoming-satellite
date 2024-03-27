@@ -13,7 +13,7 @@ func RenderView(ctx echo.Context, status int, t templ.Component) error {
 	if ctx.Request().Header.Get("hx-request") != "true" {
 		base := layout.Base()
 		children := templ.WithChildren(ctx.Request().Context(), t)
-		base.Render(children, ctx.Response().Writer)
+		return base.Render(children, ctx.Response().Writer)
 	}
     return t.Render(ctx.Request().Context(), ctx.Response().Writer)
 }
